@@ -1,4 +1,6 @@
 from rest_framework import generics, status, views, permissions
+
+from authentication.mailchimp_utils import mark_user_as_subscribed_in_mailchimp, send_email_using_mailchimp
 from .serializers import RegisterSerializer, EmailVerificationSerializer, LoginSerializer, LogoutSerializer
 from rest_framework.response import Response
 from rest_framework_simplejwt.tokens import RefreshToken
@@ -34,7 +36,12 @@ class RegisterView(generics.GenericAPIView):
             ' Use the link below to verify your email \n' + absurl
         data = {'email_body': email_body, 'to_email': user.email,
                 'email_subject': 'Verify your email'}
-
+        ######################################################## SEND MAIL USING MAILCHIMP ####################################################################
+        #### Use below given method to send mail using mailchimp. 
+        #### NOTE: First verify Domain in mailchimp before sending email check below given link
+        ##### https://mailchimp.com/developer/transactional/guides/send-first-email/
+        # send_email_using_mailchimp(to_email = user.email,username = user.username, url = absurl)
+        ######################################################################################################################################################
         Util.send_email(data)
         return Response(user_data, status=status.HTTP_201_CREATED)
 
@@ -53,12 +60,16 @@ class VerifyEmail(views.APIView):
             user = User.objects.get(id=payload['user_id'])
             if not user.is_verified:
                 user.is_verified = True
+                ########################################################### MARK USER AS SUBSCRIBED IN MAILCHIMP ######################################################
+                mark_user_as_subscribed_in_mailchimp(user.email)
+                #######################################################################################################################################################
                 user.save()
             return Response({'email': 'Successfully activated'}, status=status.HTTP_200_OK)
-        except jwt.ExpiredSignatureError as identifier:
+        except jwt.ExpiredSignatureError:
             return Response({'error': 'Activation Expired'}, status=status.HTTP_400_BAD_REQUEST)
-        except jwt.exceptions.DecodeError as identifier:
+        except (jwt.exceptions.DecodeError, User.DoesNotExist):
             return Response({'error': 'Invalid token'}, status=status.HTTP_400_BAD_REQUEST)
+
 
 
 class LoginAPIView(generics.GenericAPIView):
