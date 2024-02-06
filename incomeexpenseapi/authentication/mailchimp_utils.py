@@ -126,4 +126,4 @@ def send_email_using_mailchimp(to_email,username, url):
         response = mailchimp.messages.send({"message": message})
         print(response)
     except ApiClientError as error:
-        print("An exception occurred: {}".format(error.text))
+        print(f"An exception occurred: {error.text}")

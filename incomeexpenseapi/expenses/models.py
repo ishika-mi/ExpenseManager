@@ -23,4 +23,4 @@ class Expense(models.Model):
         ordering:['-date']
 
     def __str__(self):
-        return str(self.owner)+'s income'
+        return f'{str(self.owner)}s income'

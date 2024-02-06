@@ -6,4 +6,4 @@ class IncomeSerializers(serializers.ModelSerializer):
 
     class Meta:
         model = Income
-        fields = ['date','description','amount','source']
+        fields = ['id','date','description','amount','source']
