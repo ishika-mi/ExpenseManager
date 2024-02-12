@@ -8,8 +8,6 @@ from rest_framework.exceptions import AuthenticationFailed
 from rest_framework_simplejwt.tokens import RefreshToken, TokenError
 from django.contrib.auth.tokens import PasswordResetTokenGenerator
 
-from django.http import HttpResponsePermanentRedirect
-import os
 
 
 class RegisterSerializer(serializers.ModelSerializer):
@@ -21,7 +19,8 @@ class RegisterSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = ['email', 'username', 'password']
+        fields = ['username','image','first_name','last_name','about_me','gender','marital_status','wedding_date','birth_date','blood_group','personal_email','email',
+                  'pan_number','aadhar_number','aadhar_name','aadhar_image','pan_image','created_at','modified_at','deleted_at','is_admin_user','is_active','is_verified']
 
     def validate(self, attrs):
         email = attrs.get('email', '')
@@ -102,40 +101,3 @@ class LogoutSerializer(serializers.Serializer):
 
         except TokenError:
             self.fail('bad_token')
-
-class ResetPasswordEmailRequestSerializer(serializers.Serializer):
-    email = serializers.EmailField(min_length=2)
-
-    redirect_url = serializers.CharField(max_length=500, required=False)
-
-    class Meta:
-        fields = ['email']
-
-
-class SetNewPasswordSerializer(serializers.Serializer):
-    password = serializers.CharField(
-        min_length=6, max_length=68, write_only=True)
-    token = serializers.CharField(
-        min_length=1, write_only=True)
-    uidb64 = serializers.CharField(
-        min_length=1, write_only=True)
-
-    class Meta:
-        fields = ['password', 'token', 'uidb64']
-
-    def validate(self, attrs):
-        try:
-            password = attrs.get('password')
-            token = attrs.get('token')
-            uidb64 = attrs.get('uidb64')
-            user_id = str(urlsafe_b64decode(uidb64))
-            user = User.objects.get(id=user_id)
-            if not PasswordResetTokenGenerator().check_token(user, token):
-                raise AuthenticationFailed('The reset link is invalid', 401)
-
-            user.set_password(password)
-            user.save()
-
-            return (user)
-        except Exception as e:
-            raise AuthenticationFailed('The reset link is invalid', 401) from e
