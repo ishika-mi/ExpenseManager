@@ -3,7 +3,7 @@ from django.contrib.sites.shortcuts import get_current_site
 from django.urls import reverse
 import jwt
 from authentication.mailchimp_utils import mark_user_as_subscribed_in_mailchimp, send_email_using_mailchimp
-from requests import Response
+from rest_framework.response import Response
 from rest_framework import generics, status, views, permissions
 from rest_framework_simplejwt.tokens import RefreshToken
 from .models import User

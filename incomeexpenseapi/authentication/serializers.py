@@ -19,20 +19,12 @@ class RegisterSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = ['username','image','first_name','last_name','about_me','gender','marital_status','wedding_date','birth_date','blood_group','personal_email','email',
+        fields = ['username','password','image','first_name','last_name','about_me','gender','marital_status','wedding_date','birth_date','blood_group','personal_email','email',
                   'pan_number','aadhar_number','aadhar_name','aadhar_image','pan_image','created_at','modified_at','deleted_at','is_admin_user','is_active','is_verified']
 
-    def validate(self, attrs):
-        email = attrs.get('email', '')
-        username = attrs.get('username', '')
-
-        if not username.isalnum():
-            raise serializers.ValidationError(
-                self.default_error_messages)
-        return attrs
 
     def create(self, validated_data):
-        return User.objects.create_user(**validated_data)
+        return User.objects.create_user(validated_data)
 
 
 class EmailVerificationSerializer(serializers.ModelSerializer):
