@@ -1,13 +1,19 @@
+from datetime import datetime
 from django.conf import settings
 from django.contrib.sites.shortcuts import get_current_site
 from django.urls import reverse
+from django.contrib.auth.hashers import check_password
 import jwt
+from django.db.models import Q
 from authentication.mailchimp_utils import mark_user_as_subscribed_in_mailchimp, send_email_using_mailchimp
 from rest_framework.response import Response
 from rest_framework import generics, status, views, permissions
 from rest_framework_simplejwt.tokens import RefreshToken
+from rest_framework.exceptions import ValidationError
+
+from incomeexpenseapi.settings import SIMPLE_JWT
 from .models import User
-from .utils import Util
+from .utils import Util, get_tokens_for_user
 
 
 class RegisterService:
@@ -68,7 +74,26 @@ class LoginService:
     def post_login_view(self):
         serializer = self.serializer_class(data=self.request.data)
         serializer.is_valid(raise_exception=True)
-        return Response(serializer.data, status=status.HTTP_200_OK)
+
+        username = self.request.data.get('username')
+        password = self.request.data.get('password')
+        try:
+            user = User.objects.get(Q(username=username) | Q(email=username))
+        except User.DoesNotExist as e:
+            raise ValidationError('NO_USER_FOUND') from e
+        if not check_password(password, user.password):
+            raise ValidationError('INVALID_CREDENTIALS')
+        if (not user.is_active or not user.is_verified) and (user.is_active or user.is_verified):
+            raise ValidationError('NO_USER_FOUND')
+        data = get_tokens_for_user(user)
+
+        now = datetime.utcnow()
+
+        # Calculate the expiry time based on the ACCESS_TOKEN_LIFETIME in the SIMPLE_JWT settings
+        expiry_time = now + SIMPLE_JWT['ACCESS_TOKEN_LIFETIME']
+        return Response(data,  status=status.HTTP_200_OK)
+
+        # return Response(serializer.data, status=status.HTTP_200_OK)
     
 
 class LogoutService:
