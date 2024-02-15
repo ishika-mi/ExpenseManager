@@ -2,22 +2,11 @@ from expenses.models import Expense
 from django.http import JsonResponse
 
 
-class ExpenseListService:
+class ExpensePostService:
     def __init__(self, request, serializer_class, permissions_classes):
         self.request = request
         self.serializer_class = serializer_class
-        self.permissions_classes = permissions_classes
-        
-    def get_queryset(self):
-        user = self.request.user
-        return Expense.objects.raw(
-            "SELECT * FROM expenses_expense WHERE owner_id = %s", [user.id]
-        )
-    
-    def list_view(self):
-        expenses = self.get_queryset()
-        serializer = self.serializer_class(expenses, many=True)
-        return JsonResponse(serializer.data, safe=False)
+        self.permissions_classes = permissions_classes    
     
     def post_view(self):
         serializer = self.serializer_class(data=self.request.data)
